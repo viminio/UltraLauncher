@@ -5,36 +5,27 @@ const path = require('path')
 const logger = require('./loggerutil')('%c[ConfigManager]', 'color: #a02d2a; font-weight: bold')
 
 const sysRoot = process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Application Support' : process.env.HOME)
-// TODO change
-const dataPath = path.join(sysRoot, '.helioslauncher')
+const dataPath = path.join(sysRoot, '.ultralauncher')
 
-// Forked processes do not have access to electron, so we have this workaround.
 const launcherDir = process.env.CONFIG_DIRECT_PATH || require('@electron/remote').app.getPath('userData')
 
 /**
- * Retrieve the absolute path of the launcher directory.
- * 
- * @returns {string} The absolute path of the launcher directory.
- */
+ * @returns {string}
+ **/
 exports.getLauncherDirectory = function(){
     return launcherDir
 }
 
 /**
- * Get the launcher's data directory. This is where all files related
- * to game launch are installed (common, instances, java, etc).
- * 
- * @returns {string} The absolute path of the launcher's data directory.
- */
+ * @returns {string}
+ **/
 exports.getDataDirectory = function(def = false){
     return !def ? config.settings.launcher.dataDirectory : DEFAULT_CONFIG.settings.launcher.dataDirectory
 }
 
 /**
- * Set the new data directory.
- * 
- * @param {string} dataDirectory The new data directory.
- */
+ * @param {string} dataDirectory
+ **/
 exports.setDataDirectory = function(dataDirectory){
     config.settings.launcher.dataDirectory = dataDirectory
 }
@@ -63,17 +54,12 @@ function resolveMinRAM(){
     return resolveMaxRAM()
 }
 
-/**
- * Three types of values:
- * Static = Explicitly declared.
- * Dynamic = Calculated by a private function.
- * Resolved = Resolved externally, defaults to null.
- */
+
 const DEFAULT_CONFIG = {
     settings: {
         java: {
             minRAM: resolveMinRAM(),
-            maxRAM: resolveMaxRAM(), // Dynamic
+            maxRAM: resolveMaxRAM(),
             executable: null,
             jvmOptions: [
                 '-XX:+UseConcMarkSweepGC',
@@ -100,7 +86,7 @@ const DEFAULT_CONFIG = {
         dismissed: false
     },
     clientToken: null,
-    selectedServer: null, // Resolved
+    selectedServer: null,
     selectedAccount: null,
     authenticationDatabase: {},
     modConfigurations: []
@@ -108,26 +94,15 @@ const DEFAULT_CONFIG = {
 
 let config = null
 
-// Persistance Utility Functions
-
-/**
- * Save the current configuration to a file.
- */
 exports.save = function(){
     fs.writeFileSync(configPath, JSON.stringify(config, null, 4), 'UTF-8')
 }
 
-/**
- * Load the configuration into memory. If a configuration file exists,
- * that will be read and saved. Otherwise, a default configuration will
- * be generated. Note that "resolved" values default to null and will
- * need to be externally assigned.
- */
+
 exports.load = function(){
     let doLoad = true
 
     if(!fs.existsSync(configPath)){
-        // Create all parent directories.
         fs.ensureDirSync(path.join(configPath, '..'))
         if(fs.existsSync(configPathLEGACY)){
             fs.moveSync(configPathLEGACY, configPath)
@@ -159,20 +134,17 @@ exports.load = function(){
 }
 
 /**
- * @returns {boolean} Whether or not the manager has been loaded.
- */
+ * @returns {boolean}
+ **/
 exports.isLoaded = function(){
     return config != null
 }
 
 /**
- * Validate that the destination object has at least every field
- * present in the source object. Assign a default value otherwise.
- * 
- * @param {Object} srcObj The source object to reference against.
- * @param {Object} destObj The destination object.
- * @returns {Object} A validated destination object.
- */
+ * @param {Object} srcObj
+ * @param {Object} destObj
+ * @returns {Object}
+ **/
 function validateKeySet(srcObj, destObj){
     if(srcObj == null){
         srcObj = {}
@@ -190,157 +162,116 @@ function validateKeySet(srcObj, destObj){
 }
 
 /**
- * Check to see if this is the first time the user has launched the
- * application. This is determined by the existance of the data path.
- * 
- * @returns {boolean} True if this is the first launch, otherwise false.
- */
+ * @returns {boolean}
+ **/
 exports.isFirstLaunch = function(){
     return firstLaunch
 }
 
 /**
- * Returns the name of the folder in the OS temp directory which we
- * will use to extract and store native dependencies for game launch.
- * 
- * @returns {string} The name of the folder.
- */
+ * @returns {string}
+ **/
 exports.getTempNativeFolder = function(){
     return 'WCNatives'
 }
 
-// System Settings (Unconfigurable on UI)
-
 /**
- * Retrieve the news cache to determine
- * whether or not there is newer news.
- * 
- * @returns {Object} The news cache object.
- */
+ * @returns {Object}
+ **/
 exports.getNewsCache = function(){
     return config.newsCache
 }
 
 /**
- * Set the new news cache object.
- * 
- * @param {Object} newsCache The new news cache object.
- */
+ * @param {Object} newsCache
+ **/
 exports.setNewsCache = function(newsCache){
     config.newsCache = newsCache
 }
 
 /**
- * Set whether or not the news has been dismissed (checked)
- * 
- * @param {boolean} dismissed Whether or not the news has been dismissed (checked).
- */
+ * @param {boolean} dismissed
+ **/
 exports.setNewsCacheDismissed = function(dismissed){
     config.newsCache.dismissed = dismissed
 }
 
 /**
- * Retrieve the common directory for shared
- * game files (assets, libraries, etc).
- * 
- * @returns {string} The launcher's common directory.
- */
+ * @returns {string}
+ **/
 exports.getCommonDirectory = function(){
     return path.join(exports.getDataDirectory(), 'common')
 }
 
 /**
- * Retrieve the instance directory for the per
- * server game directories.
- * 
- * @returns {string} The launcher's instance directory.
- */
+ * @returns {string}
+ **/
 exports.getInstanceDirectory = function(){
     return path.join(exports.getDataDirectory(), 'instances')
 }
 
 /**
- * Retrieve the launcher's Client Token.
- * There is no default client token.
- * 
- * @returns {string} The launcher's Client Token.
- */
+ * @returns {string}
+ **/
 exports.getClientToken = function(){
     return config.clientToken
 }
 
 /**
- * Set the launcher's Client Token.
- * 
- * @param {string} clientToken The launcher's new Client Token.
- */
+ * @param {string} clientToken
+ **/
 exports.setClientToken = function(clientToken){
     config.clientToken = clientToken
 }
 
 /**
- * Retrieve the ID of the selected serverpack.
- * 
- * @param {boolean} def Optional. If true, the default value will be returned.
- * @returns {string} The ID of the selected serverpack.
- */
+ * @param {boolean} def
+ * @returns {string}
+ **/
 exports.getSelectedServer = function(def = false){
     return !def ? config.selectedServer : DEFAULT_CONFIG.clientToken
 }
 
 /**
- * Set the ID of the selected serverpack.
- * 
- * @param {string} serverID The ID of the new selected serverpack.
- */
+ * @param {string} serverID
+ **/
 exports.setSelectedServer = function(serverID){
     config.selectedServer = serverID
 }
 
 /**
- * Get an array of each account currently authenticated by the launcher.
- * 
- * @returns {Array.<Object>} An array of each stored authenticated account.
- */
+ * @returns {Array.<Object>}
+ **/
 exports.getAuthAccounts = function(){
     return config.authenticationDatabase
 }
 
 /**
- * Returns the authenticated account with the given uuid. Value may
- * be null.
- * 
- * @param {string} uuid The uuid of the authenticated account.
- * @returns {Object} The authenticated account with the given uuid.
- */
+ * @param {string} uuid
+ * @returns {Object}
+ **/
 exports.getAuthAccount = function(uuid){
     return config.authenticationDatabase[uuid]
 }
 
 /**
- * Update the access token of an authenticated mojang account.
- * 
- * @param {string} uuid The uuid of the authenticated account.
- * @param {string} accessToken The new Access Token.
- * 
- * @returns {Object} The authenticated account object created by this action.
- */
+ * @param {string} uuid
+ * @param {string} accessToken
+ * @returns {Object}
+ **/
 exports.updateMojangAuthAccount = function(uuid, accessToken){
     config.authenticationDatabase[uuid].accessToken = accessToken
-    config.authenticationDatabase[uuid].type = 'mojang' // For gradual conversion.
+    config.authenticationDatabase[uuid].type = 'mojang'
     return config.authenticationDatabase[uuid]
 }
 
 /**
- * Adds an authenticated mojang account to the database to be stored.
- * 
- * @param {string} uuid The uuid of the authenticated account.
- * @param {string} accessToken The accessToken of the authenticated account.
- * @param {string} username The username (usually email) of the authenticated account.
- * @param {string} displayName The in game name of the authenticated account.
- * 
- * @returns {Object} The authenticated account object created by this action.
- */
+ * @param {string} uuid
+ * @param {string} accessToken
+ * @param {string} username
+ * @param {string} displayName
+ * @returns {Object}
+ **/
 exports.addMojangAuthAccount = function(uuid, accessToken, username, displayName){
     config.selectedAccount = uuid
     config.authenticationDatabase[uuid] = {
@@ -354,17 +285,14 @@ exports.addMojangAuthAccount = function(uuid, accessToken, username, displayName
 }
 
 /**
- * Update the tokens of an authenticated microsoft account.
- * 
- * @param {string} uuid The uuid of the authenticated account.
- * @param {string} accessToken The new Access Token.
- * @param {string} msAccessToken The new Microsoft Access Token
- * @param {string} msRefreshToken The new Microsoft Refresh Token
- * @param {date} msExpires The date when the microsoft access token expires
- * @param {date} mcExpires The date when the mojang access token expires
- * 
- * @returns {Object} The authenticated account object created by this action.
- */
+ * @param {string} uuid
+ * @param {string} accessToken
+ * @param {string} msAccessToken
+ * @param {string} msRefreshToken
+ * @param {date} msExpires
+ * @param {date} mcExpires
+ * @returns {Object}
+ **/
 exports.updateMicrosoftAuthAccount = function(uuid, accessToken, msAccessToken, msRefreshToken, msExpires, mcExpires) {
     config.authenticationDatabase[uuid].accessToken = accessToken
     config.authenticationDatabase[uuid].expiresAt = mcExpires
@@ -375,18 +303,15 @@ exports.updateMicrosoftAuthAccount = function(uuid, accessToken, msAccessToken, 
 }
 
 /**
- * Adds an authenticated microsoft account to the database to be stored.
- * 
- * @param {string} uuid The uuid of the authenticated account.
- * @param {string} accessToken The accessToken of the authenticated account.
- * @param {string} name The in game name of the authenticated account.
- * @param {date} mcExpires The date when the mojang access token expires
- * @param {string} msAccessToken The microsoft access token
- * @param {string} msRefreshToken The microsoft refresh token
- * @param {date} msExpires The date when the microsoft access token expires
- * 
- * @returns {Object} The authenticated account object created by this action.
- */
+ * @param {string} uuid
+ * @param {string} accessToken
+ * @param {string} name
+ * @param {date} mcExpires
+ * @param {string} msAccessToken
+ * @param {string} msRefreshToken
+ * @param {date} msExpires
+ * @returns {Object}
+ **/
 exports.addMicrosoftAuthAccount = function(uuid, accessToken, name, mcExpires, msAccessToken, msRefreshToken, msExpires) {
     config.selectedAccount = uuid
     config.authenticationDatabase[uuid] = {
@@ -406,14 +331,9 @@ exports.addMicrosoftAuthAccount = function(uuid, accessToken, name, mcExpires, m
 }
 
 /**
- * Remove an authenticated account from the database. If the account
- * was also the selected account, a new one will be selected. If there
- * are no accounts, the selected account will be null.
- * 
- * @param {string} uuid The uuid of the authenticated account.
- * 
- * @returns {boolean} True if the account was removed, false if it never existed.
- */
+ * @param {string} uuid
+ * @returns {boolean}
+ **/
 exports.removeAuthAccount = function(uuid){
     if(config.authenticationDatabase[uuid] != null){
         delete config.authenticationDatabase[uuid]
@@ -432,22 +352,16 @@ exports.removeAuthAccount = function(uuid){
 }
 
 /**
- * Get the currently selected authenticated account.
- * 
- * @returns {Object} The selected authenticated account.
- */
+ * @returns {Object}
+ **/
 exports.getSelectedAccount = function(){
     return config.authenticationDatabase[config.selectedAccount]
 }
 
 /**
- * Set the selected authenticated account.
- * 
- * @param {string} uuid The UUID of the account which is to be set
- * as the selected account.
- * 
- * @returns {Object} The selected authenticated account.
- */
+ * @param {string} uuid
+ * @returns {Object}
+ **/
 exports.setSelectedAccount = function(uuid){
     const authAcc = config.authenticationDatabase[uuid]
     if(authAcc != null) {
@@ -457,29 +371,23 @@ exports.setSelectedAccount = function(uuid){
 }
 
 /**
- * Get an array of each mod configuration currently stored.
- * 
- * @returns {Array.<Object>} An array of each stored mod configuration.
- */
+ * @returns {Array.<Object>}
+ **/
 exports.getModConfigurations = function(){
     return config.modConfigurations
 }
 
 /**
- * Set the array of stored mod configurations.
- * 
- * @param {Array.<Object>} configurations An array of mod configurations.
- */
+ * @param {Array.<Object>} configurations
+ **/
 exports.setModConfigurations = function(configurations){
     config.modConfigurations = configurations
 }
 
 /**
- * Get the mod configuration for a specific server.
- * 
- * @param {string} serverid The id of the server.
- * @returns {Object} The mod configuration for the given server.
- */
+ * @param {string} serverid
+ * @returns {Object}
+ **/
 exports.getModConfiguration = function(serverid){
     const cfgs = config.modConfigurations
     for(let i=0; i<cfgs.length; i++){
@@ -491,11 +399,9 @@ exports.getModConfiguration = function(serverid){
 }
 
 /**
- * Set the mod configuration for a specific server. This overrides any existing value.
- * 
- * @param {string} serverid The id of the server for the given mod configuration.
- * @param {Object} configuration The mod configuration for the given server.
- */
+ * @param {string} serverid
+ * @param {Object} configuration
+ **/
 exports.setModConfiguration = function(serverid, configuration){
     const cfgs = config.modConfigurations
     for(let i=0; i<cfgs.length; i++){
@@ -507,236 +413,169 @@ exports.setModConfiguration = function(serverid, configuration){
     cfgs.push(configuration)
 }
 
-// User Configurable Settings
-
-// Java Settings
-
 /**
- * Retrieve the minimum amount of memory for JVM initialization. This value
- * contains the units of memory. For example, '5G' = 5 GigaBytes, '1024M' = 
- * 1024 MegaBytes, etc.
- * 
- * @param {boolean} def Optional. If true, the default value will be returned.
- * @returns {string} The minimum amount of memory for JVM initialization.
- */
+ * @param {boolean} def
+ * @returns {string}
+ **/
 exports.getMinRAM = function(def = false){
     return !def ? config.settings.java.minRAM : DEFAULT_CONFIG.settings.java.minRAM
 }
 
 /**
- * Set the minimum amount of memory for JVM initialization. This value should
- * contain the units of memory. For example, '5G' = 5 GigaBytes, '1024M' = 
- * 1024 MegaBytes, etc.
- * 
- * @param {string} minRAM The new minimum amount of memory for JVM initialization.
- */
+ * @param {string} minRAM
+ **/
 exports.setMinRAM = function(minRAM){
     config.settings.java.minRAM = minRAM
 }
 
 /**
- * Retrieve the maximum amount of memory for JVM initialization. This value
- * contains the units of memory. For example, '5G' = 5 GigaBytes, '1024M' = 
- * 1024 MegaBytes, etc.
- * 
- * @param {boolean} def Optional. If true, the default value will be returned.
- * @returns {string} The maximum amount of memory for JVM initialization.
- */
+ * @param {boolean} def
+ * @returns {string}
+ **/
 exports.getMaxRAM = function(def = false){
     return !def ? config.settings.java.maxRAM : resolveMaxRAM()
 }
 
 /**
- * Set the maximum amount of memory for JVM initialization. This value should
- * contain the units of memory. For example, '5G' = 5 GigaBytes, '1024M' = 
- * 1024 MegaBytes, etc.
- * 
- * @param {string} maxRAM The new maximum amount of memory for JVM initialization.
- */
+ * @param {string} maxRAM
+ **/
 exports.setMaxRAM = function(maxRAM){
     config.settings.java.maxRAM = maxRAM
 }
 
 /**
- * Retrieve the path of the Java Executable.
- * 
- * This is a resolved configuration value and defaults to null until externally assigned.
- * 
- * @returns {string} The path of the Java Executable.
- */
+ * @returns {string}
+ **/
 exports.getJavaExecutable = function(){
     return config.settings.java.executable
 }
 
 /**
- * Set the path of the Java Executable.
- * 
- * @param {string} executable The new path of the Java Executable.
- */
+ * @param {string} executable
+ **/
 exports.setJavaExecutable = function(executable){
     config.settings.java.executable = executable
 }
 
 /**
- * Retrieve the additional arguments for JVM initialization. Required arguments,
- * such as memory allocation, will be dynamically resolved and will not be included
- * in this value.
- * 
- * @param {boolean} def Optional. If true, the default value will be returned.
- * @returns {Array.<string>} An array of the additional arguments for JVM initialization.
- */
+ * @param {boolean} def
+ * @returns {Array.<string>}
+ **/
 exports.getJVMOptions = function(def = false){
     return !def ? config.settings.java.jvmOptions : DEFAULT_CONFIG.settings.java.jvmOptions
 }
 
 /**
- * Set the additional arguments for JVM initialization. Required arguments,
- * such as memory allocation, will be dynamically resolved and should not be
- * included in this value.
- * 
- * @param {Array.<string>} jvmOptions An array of the new additional arguments for JVM 
- * initialization.
- */
+ * @param {Array.<string>} jvmOptions
+ **/
 exports.setJVMOptions = function(jvmOptions){
     config.settings.java.jvmOptions = jvmOptions
 }
 
-// Game Settings
-
 /**
- * Retrieve the width of the game window.
- * 
- * @param {boolean} def Optional. If true, the default value will be returned.
- * @returns {number} The width of the game window.
- */
+ * @param {boolean} def
+ * @returns {number}
+ **/
 exports.getGameWidth = function(def = false){
     return !def ? config.settings.game.resWidth : DEFAULT_CONFIG.settings.game.resWidth
 }
 
 /**
- * Set the width of the game window.
- * 
- * @param {number} resWidth The new width of the game window.
- */
+ * @param {number} resWidth
+ **/
 exports.setGameWidth = function(resWidth){
     config.settings.game.resWidth = Number.parseInt(resWidth)
 }
 
 /**
- * Validate a potential new width value.
- * 
- * @param {number} resWidth The width value to validate.
- * @returns {boolean} Whether or not the value is valid.
- */
+ * @param {number} resWidth
+ * @returns {boolean}
+ **/
 exports.validateGameWidth = function(resWidth){
     const nVal = Number.parseInt(resWidth)
     return Number.isInteger(nVal) && nVal >= 0
 }
 
 /**
- * Retrieve the height of the game window.
- * 
- * @param {boolean} def Optional. If true, the default value will be returned.
- * @returns {number} The height of the game window.
- */
+ * @param {boolean} def
+ * @returns {number}
+ **/
 exports.getGameHeight = function(def = false){
     return !def ? config.settings.game.resHeight : DEFAULT_CONFIG.settings.game.resHeight
 }
 
 /**
- * Set the height of the game window.
- * 
- * @param {number} resHeight The new height of the game window.
- */
+ * @param {number} resHeight
+ **/
 exports.setGameHeight = function(resHeight){
     config.settings.game.resHeight = Number.parseInt(resHeight)
 }
 
 /**
- * Validate a potential new height value.
- * 
- * @param {number} resHeight The height value to validate.
- * @returns {boolean} Whether or not the value is valid.
- */
+ * @param {number} resHeight
+ * @returns {boolean}
+ **/
 exports.validateGameHeight = function(resHeight){
     const nVal = Number.parseInt(resHeight)
     return Number.isInteger(nVal) && nVal >= 0
 }
 
 /**
- * Check if the game should be launched in fullscreen mode.
- * 
- * @param {boolean} def Optional. If true, the default value will be returned.
- * @returns {boolean} Whether or not the game is set to launch in fullscreen mode.
- */
+ * @param {boolean} def
+ * @returns {boolean}
+ **/
 exports.getFullscreen = function(def = false){
     return !def ? config.settings.game.fullscreen : DEFAULT_CONFIG.settings.game.fullscreen
 }
 
 /**
- * Change the status of if the game should be launched in fullscreen mode.
- * 
- * @param {boolean} fullscreen Whether or not the game should launch in fullscreen mode.
- */
+ * @param {boolean} fullscreen
+ **/
 exports.setFullscreen = function(fullscreen){
     config.settings.game.fullscreen = fullscreen
 }
 
 /**
- * Check if the game should auto connect to servers.
- * 
- * @param {boolean} def Optional. If true, the default value will be returned.
- * @returns {boolean} Whether or not the game should auto connect to servers.
- */
+ * @param {boolean} def
+ * @returns {boolean}
+ **/
 exports.getAutoConnect = function(def = false){
     return !def ? config.settings.game.autoConnect : DEFAULT_CONFIG.settings.game.autoConnect
 }
 
 /**
- * Change the status of whether or not the game should auto connect to servers.
- * 
- * @param {boolean} autoConnect Whether or not the game should auto connect to servers.
- */
+ * @param {boolean} autoConnect 
+ **/
 exports.setAutoConnect = function(autoConnect){
     config.settings.game.autoConnect = autoConnect
 }
 
 /**
- * Check if the game should launch as a detached process.
- * 
- * @param {boolean} def Optional. If true, the default value will be returned.
- * @returns {boolean} Whether or not the game will launch as a detached process.
- */
+ * @param {boolean} def
+ * @returns {boolean}
+ **/
 exports.getLaunchDetached = function(def = false){
     return !def ? config.settings.game.launchDetached : DEFAULT_CONFIG.settings.game.launchDetached
 }
 
 /**
- * Change the status of whether or not the game should launch as a detached process.
- * 
- * @param {boolean} launchDetached Whether or not the game should launch as a detached process.
- */
+ * @param {boolean} launchDetached
+ **/
 exports.setLaunchDetached = function(launchDetached){
     config.settings.game.launchDetached = launchDetached
 }
 
-// Launcher Settings
-
 /**
- * Check if the launcher should download prerelease versions.
- * 
- * @param {boolean} def Optional. If true, the default value will be returned.
- * @returns {boolean} Whether or not the launcher should download prerelease versions.
- */
+ * @param {boolean} def
+ * @returns {boolean}
+ **/
 exports.getAllowPrerelease = function(def = false){
     return !def ? config.settings.launcher.allowPrerelease : DEFAULT_CONFIG.settings.launcher.allowPrerelease
 }
 
 /**
- * Change the status of Whether or not the launcher should download prerelease versions.
- * 
- * @param {boolean} launchDetached Whether or not the launcher should download prerelease versions.
- */
+ * @param {boolean} launchDetached 
+ **/
 exports.setAllowPrerelease = function(allowPrerelease){
     config.settings.launcher.allowPrerelease = allowPrerelease
 }

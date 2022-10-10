@@ -1,18 +1,10 @@
-/**
- * Script for landing.ejs
- */
-// Requirements
 const cp                      = require('child_process')
 const crypto                  = require('crypto')
 const { URL }                 = require('url')
 const { MojangRestAPI, getServerStatus }     = require('helios-core/mojang')
-
-// Internal Requirements
 const DiscordWrapper          = require('./assets/js/discordwrapper')
 const ProcessBuilder          = require('./assets/js/processbuilder')
 const { RestResponseStatus, isDisplayableError } = require('helios-core/common')
-
-// Launch Elements
 const launch_content          = document.getElementById('launch_content')
 const launch_details          = document.getElementById('launch_details')
 const launch_progress         = document.getElementById('launch_progress')
@@ -20,16 +12,11 @@ const launch_progress_label   = document.getElementById('launch_progress_label')
 const launch_details_text     = document.getElementById('launch_details_text')
 const server_selection_button = document.getElementById('server_selection_button')
 const user_text               = document.getElementById('user_text')
-
 const loggerLanding = LoggerUtil1('%c[Landing]', 'color: #000668; font-weight: bold')
 
-/* Launch Progress Wrapper Functions */
-
 /**
- * Show/hide the loading area.
- * 
- * @param {boolean} loading True if the loading area should be shown, otherwise false.
- */
+ * @param {boolean} loading
+ **/
 function toggleLaunchArea(loading){
     if(loading){
         launch_details.style.display = 'flex'
@@ -41,21 +28,17 @@ function toggleLaunchArea(loading){
 }
 
 /**
- * Set the details text of the loading area.
- * 
- * @param {string} details The new text for the loading details.
- */
+ * @param {string} details
+ **/
 function setLaunchDetails(details){
     launch_details_text.innerHTML = details
 }
 
 /**
- * Set the value of the loading progress bar and display that value.
- * 
- * @param {number} value The progress value.
- * @param {number} max The total size.
- * @param {number|string} percent Optional. The percentage to display on the progress label.
- */
+ * @param {number} value
+ * @param {number} max
+ * @param {number|string} percent
+ **/
 function setLaunchPercentage(value, max, percent = ((value/max)*100)){
     launch_progress.setAttribute('max', max)
     launch_progress.setAttribute('value', value)
@@ -63,27 +46,22 @@ function setLaunchPercentage(value, max, percent = ((value/max)*100)){
 }
 
 /**
- * Set the value of the OS progress bar and display that on the UI.
- * 
- * @param {number} value The progress value.
- * @param {number} max The total download size.
- * @param {number|string} percent Optional. The percentage to display on the progress label.
- */
+ * @param {number} value
+ * @param {number} max
+ * @param {number|string} percent
+ **/
 function setDownloadPercentage(value, max, percent = ((value/max)*100)){
     remote.getCurrentWindow().setProgressBar(value/max)
     setLaunchPercentage(value, max, percent)
 }
 
 /**
- * Enable or disable the launch button.
- * 
- * @param {boolean} val True to enable, false to disable.
- */
+ * @param {boolean} val
+ **/
 function setLaunchEnabled(val){
     document.getElementById('launch_button').disabled = !val
 }
 
-// Bind launch button
 document.getElementById('launch_button').addEventListener('click', function(e){
     loggerLanding.log('Launching game..')
     const mcVersion = DistroManager.getDistribution().getServer(ConfigManager.getSelectedServer()).getMinecraftVersion()
@@ -108,13 +86,11 @@ document.getElementById('launch_button').addEventListener('click', function(e){
     }
 })
 
-// Bind settings button
 document.getElementById('settingsMediaButton').onclick = (e) => {
     prepareSettings()
     switchView(getCurrentView(), VIEWS.settings)
 }
 
-// Bind avatar overlay button.
 document.getElementById('avatarOverlay').onclick = (e) => {
     prepareSettings()
     switchView(getCurrentView(), VIEWS.settings, 500, 500, () => {
@@ -122,7 +98,6 @@ document.getElementById('avatarOverlay').onclick = (e) => {
     })
 }
 
-// Bind selected account
 function updateSelectedAccount(authUser){
     let username = 'No Account Selected'
     if(authUser != null){
@@ -137,7 +112,6 @@ function updateSelectedAccount(authUser){
 }
 updateSelectedAccount(ConfigManager.getSelectedAccount())
 
-// Bind selected server
 function updateSelectedServer(serv){
     if(getCurrentView() === VIEWS.settings){
         saveAllModConfigurations()
@@ -150,14 +124,12 @@ function updateSelectedServer(serv){
     }
     setLaunchEnabled(serv != null)
 }
-// Real text is set in uibinder.js on distributionIndexDone.
 server_selection_button.innerHTML = '\u2022 Loading..'
 server_selection_button.onclick = (e) => {
     e.target.blur()
     toggleServerSelection(true)
 }
 
-// Update Mojang Status Color
 const refreshMojangStatuses = async function(){
     loggerLanding.log('Refreshing Mojang Statuses..')
 
@@ -251,18 +223,13 @@ const refreshServerStatus = async function(fade = false){
 }
 
 refreshMojangStatuses()
-// Server Status is refreshed in uibinder.js on distributionIndexDone.
-
-// Set refresh rate to once every 5 minutes.
 let mojangStatusListener = setInterval(() => refreshMojangStatuses(true), 300000)
 let serverStatusListener = setInterval(() => refreshServerStatus(true), 300000)
 
 /**
- * Shows an error overlay, toggles off the launch area.
- * 
- * @param {string} title The overlay title.
- * @param {string} desc The overlay description.
- */
+ * @param {string} title
+ * @param {string} desc
+ **/
 function showLaunchFailure(title, desc){
     setOverlayContent(
         title,
@@ -274,19 +241,15 @@ function showLaunchFailure(title, desc){
     toggleLaunchArea(false)
 }
 
-/* System (Java) Scan */
-
 let sysAEx
 let scanAt
 
 let extractListener
 
 /**
- * Asynchronously scan the system for valid Java installations.
- * 
- * @param {string} mcVersion The Minecraft version we are scanning for.
- * @param {boolean} launchAfter Whether we should begin to launch after scanning. 
- */
+ * @param {string} mcVersion
+ * @param {boolean} launchAfter
+ **/
 function asyncSystemScan(mcVersion, launchAfter = true){
 
     setLaunchDetails('Please wait..')
@@ -298,7 +261,6 @@ function asyncSystemScan(mcVersion, launchAfter = true){
     const forkEnv = JSON.parse(JSON.stringify(process.env))
     forkEnv.CONFIG_DIRECT_PATH = ConfigManager.getLauncherDirectory()
 
-    // Fork a process to run validations.
     sysAEx = cp.fork(path.join(__dirname, 'assets', 'js', 'assetexec.js'), [
         'JavaGuard',
         mcVersion
@@ -306,12 +268,10 @@ function asyncSystemScan(mcVersion, launchAfter = true){
         env: forkEnv,
         stdio: 'pipe'
     })
-    // Stdout
     sysAEx.stdio[1].setEncoding('utf8')
     sysAEx.stdio[1].on('data', (data) => {
         loggerSysAEx.log(data)
     })
-    // Stderr
     sysAEx.stdio[2].setEncoding('utf8')
     sysAEx.stdio[2].on('data', (data) => {
         loggerSysAEx.log(data)
@@ -321,8 +281,6 @@ function asyncSystemScan(mcVersion, launchAfter = true){
 
         if(m.context === 'validateJava'){
             if(m.result == null){
-                // If the result is null, no valid Java installation was found.
-                // Show this information to the user.
                 setOverlayContent(
                     'No Compatible<br>Java Installation Found',
                     'In order to join WesterosCraft, you need a 64-bit installation of Java 8. Would you like us to install a copy?',
@@ -337,10 +295,9 @@ function asyncSystemScan(mcVersion, launchAfter = true){
                 })
                 setDismissHandler(() => {
                     $('#overlayContent').fadeOut(250, () => {
-                        //$('#overlayDismiss').toggle(false)
                         setOverlayContent(
                             'Java is Required<br>to Launch',
-                            'A valid x64 installation of Java 8 is required to launch.<br><br>Please refer to our <a href="https://github.com/dscalzi/HeliosLauncher/wiki/Java-Management#manually-installing-a-valid-version-of-java">Java Management Guide</a> for instructions on how to manually install Java.',
+                            'A valid x64 installation of Java 8 is required to launch.<br><br>Please refer to our <a href="https://github.com/viminio/UltraLauncher/wiki/Java-Management#manually-installing-a-valid-version-of-java">Java Management Guide</a> for instructions on how to manually install Java.',
                             'I Understand',
                             'Go Back'
                         )
@@ -358,12 +315,8 @@ function asyncSystemScan(mcVersion, launchAfter = true){
                 toggleOverlay(true, true)
 
             } else {
-                // Java installation found, use this to launch the game.
                 ConfigManager.setJavaExecutable(m.result)
                 ConfigManager.save()
-
-                // We need to make sure that the updated value is on the settings UI.
-                // Just incase the settings UI is already open.
                 settingsJavaExecVal.value = m.result
                 populateJavaExecDetails(settingsJavaExecVal.value)
 
@@ -376,17 +329,14 @@ function asyncSystemScan(mcVersion, launchAfter = true){
 
             if(m.result === true){
 
-                // Oracle JRE enqueued successfully, begin download.
                 setLaunchDetails('Downloading Java..')
                 sysAEx.send({task: 'execute', function: 'processDlQueues', argsArr: [[{id:'java', limit:1}]]})
 
             } else {
 
-                // Oracle JRE enqueue failed. Probably due to a change in their website format.
-                // User will have to follow the guide to install Java.
                 setOverlayContent(
                     'Unexpected Issue:<br>Java Download Failed',
-                    'Unfortunately we\'ve encountered an issue while attempting to install Java. You will need to manually install a copy. Please check out our <a href="https://github.com/dscalzi/HeliosLauncher/wiki">Troubleshooting Guide</a> for more details and instructions.',
+                    'Unfortunately we\'ve encountered an issue while attempting to install Java. You will need to manually install a copy. Please check out our <a href="https://github.com/viminio/UltraLauncher/wiki">Troubleshooting Guide</a> for more details and instructions.',
                     'I Understand'
                 )
                 setOverlayHandler(() => {
@@ -402,7 +352,6 @@ function asyncSystemScan(mcVersion, launchAfter = true){
 
             switch(m.data){
                 case 'download':
-                    // Downloading..
                     setDownloadPercentage(m.value, m.total, m.percent)
                     break
             }
@@ -411,10 +360,8 @@ function asyncSystemScan(mcVersion, launchAfter = true){
 
             switch(m.data){
                 case 'download': {
-                    // Show installing progress bar.
                     remote.getCurrentWindow().setProgressBar(2)
 
-                    // Wait for extration to complete.
                     const eLStr = 'Extracting'
                     let dotStr = ''
                     setLaunchDetails(eLStr)
@@ -429,10 +376,8 @@ function asyncSystemScan(mcVersion, launchAfter = true){
                     break
                 }
                 case 'java':
-                // Download & extraction complete, remove the loading from the OS progress bar.
                     remote.getCurrentWindow().setProgressBar(-1)
 
-                    // Extraction completed successfully.
                     ConfigManager.setJavaExecutable(m.args[0])
                     ConfigManager.save()
 
@@ -456,18 +401,13 @@ function asyncSystemScan(mcVersion, launchAfter = true){
         }
     })
 
-    // Begin system Java scan.
     setLaunchDetails('Checking system info..')
     sysAEx.send({task: 'execute', function: 'validateJava', argsArr: [ConfigManager.getDataDirectory()]})
 
 }
 
-// Keep reference to Minecraft Process
 let proc
-// Is DiscordRPC enabled
 let hasRPC = false
-// Joined server regex
-// Change this if your server uses something different.
 const GAME_JOINED_REGEX = /\[.+\]: Sound engine started/
 const GAME_LAUNCH_REGEX = /^\[.+\]: (?:MinecraftForge .+ Initialized|ModLauncher .+ starting: .+)$/
 const MIN_LINGER = 5000
@@ -480,9 +420,6 @@ let forgeData
 let progressListener
 
 function dlAsync(login = true){
-
-    // Login parameter is temporary for debug purposes. Allows testing the validation/downloads without
-    // launching the game.
 
     if(login) {
         if(ConfigManager.getSelectedAccount() == null){
@@ -501,7 +438,6 @@ function dlAsync(login = true){
     const forkEnv = JSON.parse(JSON.stringify(process.env))
     forkEnv.CONFIG_DIRECT_PATH = ConfigManager.getLauncherDirectory()
 
-    // Start AssetExec to run validations and downloads in a forked process.
     aEx = cp.fork(path.join(__dirname, 'assets', 'js', 'assetexec.js'), [
         'AssetGuard',
         ConfigManager.getCommonDirectory(),
@@ -510,12 +446,10 @@ function dlAsync(login = true){
         env: forkEnv,
         stdio: 'pipe'
     })
-    // Stdout
     aEx.stdio[1].setEncoding('utf8')
     aEx.stdio[1].on('data', (data) => {
         loggerAEx.log(data)
     })
-    // Stderr
     aEx.stdio[2].setEncoding('utf8')
     aEx.stdio[2].on('data', (data) => {
         loggerAEx.log(data)
@@ -530,8 +464,6 @@ function dlAsync(login = true){
             showLaunchFailure('Error During Launch', 'See console (CTRL + Shift + i) for more details.')
         }
     })
-
-    // Establish communications between the AssetExec and current process.
     aEx.on('message', (m) => {
 
         if(m.context === 'validate'){
@@ -573,10 +505,8 @@ function dlAsync(login = true){
                     setDownloadPercentage(m.value, m.total, m.percent)
                     break
                 case 'extract': {
-                    // Show installing progress bar.
                     remote.getCurrentWindow().setProgressBar(2)
 
-                    // Download done, extracting.
                     const eLStr = 'Extracting libraries'
                     let dotStr = ''
                     setLaunchDetails(eLStr)
@@ -594,7 +524,6 @@ function dlAsync(login = true){
         } else if(m.context === 'complete'){
             switch(m.data){
                 case 'download':
-                    // Download and extraction complete, remove the loading from the OS progress bar.
                     remote.getCurrentWindow().setProgressBar(-1)
                     if(progressListener != null){
                         clearInterval(progressListener)
@@ -623,7 +552,6 @@ function dlAsync(login = true){
 
                     remote.getCurrentWindow().setProgressBar(-1)
 
-                    // Disconnect from AssetExec
                     aEx.disconnect()
                     break
             }
@@ -631,7 +559,6 @@ function dlAsync(login = true){
 
             let allGood = true
 
-            // If these properties are not defined it's likely an error.
             if(m.result.forgeData == null || m.result.versionData == null){
                 loggerLaunchSuite.error('Error during validation:', m.result)
 
@@ -650,7 +577,6 @@ function dlAsync(login = true){
                 let pb = new ProcessBuilder(serv, versionData, forgeData, authUser, remote.app.getVersion())
                 setLaunchDetails('Launching game..')
 
-                // const SERVER_JOINED_REGEX = /\[.+\]: \[CHAT\] [a-zA-Z0-9_]{1,16} joined the game/
                 const SERVER_JOINED_REGEX = new RegExp(`\\[.+\\]: \\[CHAT\\] ${authUser.displayName} joined the game`)
 
                 const onLoadComplete = () => {
@@ -664,10 +590,6 @@ function dlAsync(login = true){
                 }
                 const start = Date.now()
 
-                // Attach a temporary listener to the client output.
-                // Will wait for a certain bit of text meaning that
-                // the client application has started, and we can hide
-                // the progress bar stuff.
                 const tempListener = function(data){
                     if(GAME_LAUNCH_REGEX.test(data.trim())){
                         const diff = Date.now()-start
@@ -679,7 +601,6 @@ function dlAsync(login = true){
                     }
                 }
 
-                // Listener for Discord RPC.
                 const gameStateChange = function(data){
                     data = data.trim()
                     if(SERVER_JOINED_REGEX.test(data)){
@@ -693,21 +614,18 @@ function dlAsync(login = true){
                     data = data.trim()
                     if(data.indexOf('Could not find or load main class net.minecraft.launchwrapper.Launch') > -1){
                         loggerLaunchSuite.error('Game launch failed, LaunchWrapper was not downloaded properly.')
-                        showLaunchFailure('Error During Launch', 'The main file, LaunchWrapper, failed to download properly. As a result, the game cannot launch.<br><br>To fix this issue, temporarily turn off your antivirus software and launch the game again.<br><br>If you have time, please <a href="https://github.com/dscalzi/HeliosLauncher/issues">submit an issue</a> and let us know what antivirus software you use. We\'ll contact them and try to straighten things out.')
+                        showLaunchFailure('Error During Launch', 'The main file, LaunchWrapper, failed to download properly. As a result, the game cannot launch.<br><br>To fix this issue, temporarily turn off your antivirus software and launch the game again.<br><br>If you have time, please <a href="https://github.com/viminio/UltraLauncher/issues">submit an issue</a> and let us know what antivirus software you use. We\'ll contact them and try to straighten things out.')
                     }
                 }
 
                 try {
-                    // Build Minecraft process.
                     proc = pb.build()
 
-                    // Bind listeners to stdout.
                     proc.stdout.on('data', tempListener)
                     proc.stderr.on('data', gameErrorListener)
 
                     setLaunchDetails('Done. Enjoy the server!')
 
-                    // Init Discord Hook
                     const distro = DistroManager.getDistribution()
                     if(distro.discord != null && serv.discord != null){
                         DiscordWrapper.initRPC(distro.discord, serv.discord)
@@ -727,16 +645,11 @@ function dlAsync(login = true){
 
                 }
             }
-
-            // Disconnect from AssetExec
             aEx.disconnect()
 
         }
     })
 
-    // Begin Validations
-
-    // Validate Forge files.
     setLaunchDetails('Loading server information..')
 
     refreshDistributionIndex(true, (data) => {
@@ -754,7 +667,6 @@ function dlAsync(login = true){
             if(DistroManager.getDistribution() == null){
                 showLaunchFailure('Fatal Error', 'Could not load a copy of the distribution index. See the console (CTRL + Shift + i) for more details.')
 
-                // Disconnect from AssetExec
                 aEx.disconnect()
             } else {
                 serv = data.getServer(ConfigManager.getSelectedServer())
@@ -764,11 +676,6 @@ function dlAsync(login = true){
     })
 }
 
-/**
- * News Loading Functions
- */
-
-// DOM Cache
 const newsContent                   = document.getElementById('newsContent')
 const newsArticleTitle              = document.getElementById('newsArticleTitle')
 const newsArticleDate               = document.getElementById('newsArticleDate')
@@ -778,15 +685,12 @@ const newsNavigationStatus          = document.getElementById('newsNavigationSta
 const newsArticleContentScrollable  = document.getElementById('newsArticleContentScrollable')
 const nELoadSpan                    = document.getElementById('nELoadSpan')
 
-// News slide caches.
 let newsActive = false
 let newsGlideCount = 0
 
 /**
- * Show the news UI via a slide animation.
- * 
- * @param {boolean} up True to slide up, otherwise false. 
- */
+ * @param {boolean} up
+ **/
 function slide_(up){
     const lCUpper = document.querySelector('#landingContainer > #upper')
     const lCLLeft = document.querySelector('#landingContainer > #lower > #left')
@@ -805,8 +709,6 @@ function slide_(up){
         lCLRight.style.top = '-200vh'
         newsBtn.style.top = '130vh'
         newsContainer.style.top = '0px'
-        //date.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric'})
-        //landingContainer.style.background = 'rgba(29, 29, 29, 0.55)'
         landingContainer.style.background = 'rgba(0, 0, 0, 0.50)'
         setTimeout(() => {
             if(newsGlideCount === 1){
@@ -831,9 +733,7 @@ function slide_(up){
     }
 }
 
-// Bind news button.
 document.getElementById('newsButton').onclick = () => {
-    // Toggle tabbing.
     if(newsActive){
         $('#landingContainer *').removeAttr('tabindex')
         $('#newsContainer *').attr('tabindex', '-1')
@@ -851,17 +751,12 @@ document.getElementById('newsButton').onclick = () => {
     newsActive = !newsActive
 }
 
-// Array to store article meta.
 let newsArr = null
-
-// News load animation listener.
 let newsLoadingListener = null
 
 /**
- * Set the news loading animation.
- * 
- * @param {boolean} val True to set loading animation, otherwise false.
- */
+ * @param {boolean} val
+ **/
 function setNewsLoading(val){
     if(val){
         const nLStr = 'Checking for News'
@@ -883,7 +778,6 @@ function setNewsLoading(val){
     }
 }
 
-// Bind retry button.
 newsErrorRetry.onclick = () => {
     $('#newsErrorFailed').fadeOut(250, () => {
         initNews()
@@ -900,11 +794,8 @@ newsArticleContentScrollable.onscroll = (e) => {
 }
 
 /**
- * Reload the news without restarting.
- * 
- * @returns {Promise.<void>} A promise which resolves when the news
- * content has finished loading and transitioning.
- */
+ * @returns {Promise.<void>}
+ **/
 function reloadNews(){
     return new Promise((resolve, reject) => {
         $('#newsContent').fadeOut(250, () => {
@@ -918,21 +809,14 @@ function reloadNews(){
 
 let newsAlertShown = false
 
-/**
- * Show the news alert indicating there is new news.
- */
 function showNewsAlert(){
     newsAlertShown = true
     $(newsButtonAlert).fadeIn(250)
 }
 
 /**
- * Initialize News UI. This will load the news and prepare
- * the UI accordingly.
- * 
- * @returns {Promise.<void>} A promise which resolves when the news
- * content has finished loading and transitioning.
- */
+ * @returns {Promise.<void>}
+ **/
 function initNews(){
 
     return new Promise((resolve, reject) => {
@@ -944,7 +828,6 @@ function initNews(){
             newsArr = news.articles || null
 
             if(newsArr == null){
-                // News Loading Failed
                 setNewsLoading(false)
 
                 $('#newsErrorLoading').fadeOut(250, () => {
@@ -953,7 +836,6 @@ function initNews(){
                     })
                 })
             } else if(newsArr.length === 0) {
-                // No News Articles
                 setNewsLoading(false)
 
                 ConfigManager.setNewsCache({
@@ -969,7 +851,6 @@ function initNews(){
                     })
                 })
             } else {
-                // Success
                 setNewsLoading(false)
 
                 const lN = newsArr[0]
@@ -981,8 +862,6 @@ function initNews(){
                 if(cached.date != null && cached.content != null){
 
                     if(new Date(cached.date) >= newDate){
-
-                        // Compare Content
                         if(cached.content !== newHash){
                             isNew = true
                             showNewsAlert()
@@ -1035,21 +914,11 @@ function initNews(){
     })
 }
 
-/**
- * Add keyboard controls to the news UI. Left and right arrows toggle
- * between articles. If you are on the landing page, the up arrow will
- * open the news UI.
- */
 document.addEventListener('keydown', (e) => {
     if(newsActive){
         if(e.key === 'ArrowRight' || e.key === 'ArrowLeft'){
             document.getElementById(e.key === 'ArrowRight' ? 'newsNavigateRight' : 'newsNavigateLeft').click()
         }
-        // Interferes with scrolling an article using the down arrow.
-        // Not sure of a straight forward solution at this point.
-        // if(e.key === 'ArrowDown'){
-        //     document.getElementById('newsButton').click()
-        // }
     } else {
         if(getCurrentView() === VIEWS.landing){
             if(e.key === 'ArrowUp'){
@@ -1060,11 +929,9 @@ document.addEventListener('keydown', (e) => {
 })
 
 /**
- * Display a news article on the UI.
- * 
- * @param {Object} articleObject The article meta object.
- * @param {number} index The article index.
- */
+ * @param {Object} articleObject
+ * @param {number} index
+ **/
 function displayArticle(articleObject, index){
     newsArticleTitle.innerHTML = articleObject.title
     newsArticleTitle.href = articleObject.link
@@ -1083,10 +950,6 @@ function displayArticle(articleObject, index){
     newsContent.setAttribute('article', index-1)
 }
 
-/**
- * Load news information from the RSS feed specified in the
- * distribution index.
- */
 function loadNews(){
     return new Promise((resolve, reject) => {
         const distroData = DistroManager.getDistribution()
@@ -1099,17 +962,13 @@ function loadNews(){
                 const articles = []
 
                 for(let i=0; i<items.length; i++){
-                // JQuery Element
                     const el = $(items[i])
 
-                    // Resolve date.
                     const date = new Date(el.find('pubDate').text()).toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: 'numeric'})
 
-                    // Resolve comments.
                     let comments = el.find('slash\\:comments').text() || '0'
                     comments = comments + ' Comment' + (comments === '1' ? '' : 's')
 
-                    // Fix relative links in content.
                     let content = el.find('content\\:encoded').text()
                     let regex = /src="(?!http:\/\/|https:\/\/)(.+?)"/g
                     let matches
@@ -1121,7 +980,6 @@ function loadNews(){
                     let title  = el.find('title').text()
                     let author = el.find('dc\\:creator').text()
 
-                    // Generate article.
                     articles.push(
                         {
                             link,

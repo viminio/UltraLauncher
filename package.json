@@ -1,13 +1,13 @@
 {
-  "name": "helioslauncher",
+  "name": "ultralauncher",
   "version": "1.9.0",
-  "productName": "Helios Launcher",
-  "description": "Modded Minecraft Launcher",
-  "author": "Daniel Scalzi (https://github.com/dscalzi/)",
-  "license": "UNLICENSED",
-  "homepage": "https://github.com/dscalzi/HeliosLauncher",
+  "productName": "Ultra Launcher",
+  "description": "Launcher do CraftGX",
+  "author": "ViminioSM (https://github.com/viminio/)",
+  "license": "MIT",
+  "homepage": "https://github.com/viminio/UltraLauncher",
   "bugs": {
-    "url": "https://github.com/dscalzi/HeliosLauncher/issues"
+    "url": "https://github.com/viminio/UltraLauncher/issues"
   },
   "private": true,
   "main": "index.js",
@@ -48,6 +48,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dscalzi/HeliosLauncher.git"
+    "url": "git+https://github.com/viminio/UltraLauncher.git"
   }
 }

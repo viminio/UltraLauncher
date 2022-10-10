@@ -5,51 +5,40 @@ const request = require('request')
 const ConfigManager = require('./configmanager')
 const logger        = require('./loggerutil')('%c[DistroManager]', 'color: #a02d2a; font-weight: bold')
 
-/**
- * Represents the download information
- * for a specific module.
- */
 class Artifact {
     
     /**
-     * Parse a JSON object into an Artifact.
-     * 
-     * @param {Object} json A JSON object representing an Artifact.
-     * 
-     * @returns {Artifact} The parsed Artifact.
-     */
+     * @param {Object} json 
+     * @returns {Artifact}
+     **/
     static fromJSON(json){
         return Object.assign(new Artifact(), json)
     }
 
     /**
-     * Get the MD5 hash of the artifact. This value may
-     * be undefined for artifacts which are not to be
-     * validated and updated.
-     * 
-     * @returns {string} The MD5 hash of the Artifact or undefined.
-     */
+     * @returns {string}
+     **/
     getHash(){
         return this.MD5
     }
 
     /**
-     * @returns {number} The download size of the artifact.
-     */
+     * @returns {number}
+     **/
     getSize(){
         return this.size
     }
 
     /**
-     * @returns {string} The download url of the artifact.
-     */
+     * @returns {string}
+     **/
     getURL(){
         return this.url
     }
 
     /**
-     * @returns {string} The artifact's destination path.
-     */
+     * @returns {string}
+     **/
     getPath(){
         return this.path
     }
@@ -57,19 +46,12 @@ class Artifact {
 }
 exports.Artifact
 
-/**
- * Represents a the requirement status
- * of a module.
- */
 class Required {
     
     /**
-     * Parse a JSON object into a Required object.
-     * 
-     * @param {Object} json A JSON object representing a Required object.
-     * 
-     * @returns {Required} The parsed Required object.
-     */
+     * @param {Object} json
+     * @returns {Required}
+     **/
     static fromJSON(json){
         if(json == null){
             return new Required(true, true)
@@ -84,19 +66,15 @@ class Required {
     }
 
     /**
-     * Get the default value for a required object. If a module
-     * is not required, this value determines whether or not
-     * it is enabled by default.
-     * 
-     * @returns {boolean} The default enabled value.
-     */
+     * @returns {boolean}
+     **/
     isDefault(){
         return this.default
     }
 
     /**
-     * @returns {boolean} Whether or not the module is required.
-     */
+     * @returns {boolean}
+     **/
     isRequired(){
         return this.value
     }
@@ -104,30 +82,21 @@ class Required {
 }
 exports.Required
 
-/**
- * Represents a module.
- */
 class Module {
 
     /**
-     * Parse a JSON object into a Module.
-     * 
-     * @param {Object} json A JSON object representing a Module.
-     * @param {string} serverid The ID of the server to which this module belongs.
-     * 
-     * @returns {Module} The parsed Module.
-     */
+     * @param {Object} json
+     * @param {string} serverid
+     * @returns {Module}
+     **/
     static fromJSON(json, serverid){
         return new Module(json.id, json.name, json.type, json.required, json.artifact, json.subModules, serverid)
     }
 
     /**
-     * Resolve the default extension for a specific module type.
-     * 
-     * @param {string} type The type of the module.
-     * 
-     * @return {string} The default extension for the given type.
-     */
+     * @param {string} type
+     * @return {string}
+     **/
     static _resolveDefaultExtension(type){
         switch (type) {
             case exports.Types.Library:
@@ -139,7 +108,7 @@ class Module {
                 return 'litemod'
             case exports.Types.File:
             default:
-                return 'jar' // There is no default extension really.
+                return 'jar'
         }
     }
 
@@ -169,7 +138,6 @@ class Module {
             this.artifactGroup = m1[0] || '???'
 
         } catch (err) {
-            // Improper identifier
             logger.error('Improper ID for module', this.identifier, err)
         }
     }
@@ -209,99 +177,99 @@ class Module {
     }
 
     /**
-     * @returns {string} The full, unparsed module identifier.
-     */
+     * @returns {string}
+     **/
     getIdentifier(){
         return this.identifier
     }
 
     /**
-     * @returns {string} The name of the module.
-     */
+     * @returns {string}
+     **/
     getName(){
         return this.name
     }
 
     /**
-     * @returns {Required} The required object declared by this module.
-     */
+     * @returns {Required}
+     **/
     getRequired(){
         return this.required
     }
 
     /**
-     * @returns {Artifact} The artifact declared by this module.
-     */
+     * @returns {Artifact}
+     **/
     getArtifact(){
         return this.artifact
     }
 
     /**
-     * @returns {string} The maven identifier of this module's artifact.
-     */
+     * @returns {string}
+     **/
     getID(){
         return this.artifactID
     }
 
     /**
-     * @returns {string} The maven group of this module's artifact.
-     */
+     * @returns {string}
+     **/
     getGroup(){
         return this.artifactGroup
     }
 
     /**
-     * @returns {string} The identifier without he version or extension.
-     */
+     * @returns {string}
+     **/
     getVersionlessID(){
         return this.getGroup() + ':' + this.getID()
     }
 
     /**
-     * @returns {string} The identifier without the extension.
-     */
+     * @returns {string}
+     **/
     getExtensionlessID(){
         return this.getIdentifier().split('@')[0]
     }
 
     /**
-     * @returns {string} The version of this module's artifact.
-     */
+     * @returns {string}
+     **/
     getVersion(){
         return this.artifactVersion
     }
 
     /**
-     * @returns {string} The classifier of this module's artifact
-     */
+     * @returns {string}
+     **/
     getClassifier(){
         return this.artifactClassifier
     }
 
     /**
-     * @returns {string} The extension of this module's artifact.
-     */
+     * @returns {string}
+     **/
     getExtension(){
         return this.artifactExt
     }
 
     /**
-     * @returns {boolean} Whether or not this module has sub modules.
-     */
+     * @returns {boolean}
+     **/
     hasSubModules(){
         return this.subModules != null
     }
 
     /**
-     * @returns {Array.<Module>} An array of sub modules.
-     */
+     * @returns {Array.<Module>}
+     **/
     getSubModules(){
         return this.subModules
     }
 
     /**
-     * @returns {string} The type of the module.
-     */
+     * @returns {string}
+     **/
     getType(){
         return this.type
     }
@@ -309,18 +277,12 @@ class Module {
 }
 exports.Module
 
-/**
- * Represents a server configuration.
- */
 class Server {
 
     /**
-     * Parse a JSON object into a Server.
-     * 
-     * @param {Object} json A JSON object representing a Server.
-     * 
-     * @returns {Server} The parsed Server object.
-     */
+     * @param {Object} json
+     * @returns {Server}
+     **/
     static fromJSON(json){
 
         const mdls = json.modules
@@ -341,74 +303,71 @@ class Server {
     }
 
     /**
-     * @returns {string} The ID of the server.
-     */
+     * @returns {string}
+     **/
     getID(){
         return this.id
     }
 
     /**
-     * @returns {string} The name of the server.
-     */
+     * @returns {string}
+     **/
     getName(){
         return this.name
     }
 
     /**
-     * @returns {string} The description of the server.
-     */
+     * @returns {string}
+     **/
     getDescription(){
         return this.description
     }
 
     /**
-     * @returns {string} The URL of the server's icon.
-     */
+     * @returns {string}
+     **/
     getIcon(){
         return this.icon
     }
 
     /**
-     * @returns {string} The version of the server configuration.
-     */
+     * @returns {string}
+     **/
     getVersion(){
         return this.version
     }
 
     /**
-     * @returns {string} The IP address of the server.
-     */
+     * @returns {string}
+     **/
     getAddress(){
         return this.address
     }
 
     /**
-     * @returns {string} The minecraft version of the server.
-     */
+     * @returns {string}
+     **/
     getMinecraftVersion(){
         return this.minecraftVersion
     }
 
     /**
-     * @returns {boolean} Whether or not this server is the main
-     * server. The main server is selected by the launcher when
-     * no valid server is selected.
-     */
+     * @returns {boolean}
+     **/
     isMainServer(){
         return this.mainServer
     }
 
     /**
-     * @returns {boolean} Whether or not the server is autoconnect.
-     * by default.
-     */
+     * @returns {boolean}
+     **/
     isAutoConnect(){
         return this.autoconnect
     }
 
     /**
-     * @returns {Array.<Module>} An array of modules for this server.
-     */
+     * @returns {Array.<Module>}
+     **/
     getModules(){
         return this.modules
     }
@@ -416,18 +375,12 @@ class Server {
 }
 exports.Server
 
-/**
- * Represents the Distribution Index.
- */
 class DistroIndex {
 
     /**
-     * Parse a JSON object into a DistroIndex.
-     * 
-     * @param {Object} json A JSON object representing a DistroIndex.
-     * 
-     * @returns {DistroIndex} The parsed Server object.
-     */
+     * @param {Object} json
+     * @returns {DistroIndex}
+     **/
     static fromJSON(json){
 
         const servers = json.servers
@@ -457,39 +410,34 @@ class DistroIndex {
             }
         }
 
-        // If no server declares default_selected, default to the first one declared.
         this.mainServer = (this.servers.length > 0) ? this.servers[0].getID() : null
     }
 
     /**
-     * @returns {string} The version of the distribution index.
-     */
+     * @returns {string}
+     **/
     getVersion(){
         return this.version
     }
 
     /**
-     * @returns {string} The URL to the news RSS feed.
-     */
+     * @returns {string}
+     **/
     getRSS(){
         return this.rss
     }
 
     /**
-     * @returns {Array.<Server>} An array of declared server configurations.
-     */
+     * @returns {Array.<Server>}
+     **/
     getServers(){
         return this.servers
     }
 
     /**
-     * Get a server configuration by its ID. If it does not
-     * exist, null will be returned.
-     * 
-     * @param {string} id The ID of the server.
-     * 
-     * @returns {Server} The server configuration with the given ID or null.
-     */
+     * @param {string} id
+     * @returns {Server}
+     **/
     getServer(id){
         for(let serv of this.servers){
             if(serv.id === id){
@@ -500,10 +448,8 @@ class DistroIndex {
     }
 
     /**
-     * Get the main server.
-     * 
-     * @returns {Server} The main server.
-     */
+     * @returns {Server}
+     **/
     getMainServer(){
         return this.mainServer != null ? this.getServer(this.mainServer) : null
     }
@@ -514,7 +460,7 @@ exports.DistroIndex
 exports.Types = {
     Library: 'Library',
     ForgeHosted: 'ForgeHosted',
-    Forge: 'Forge', // Unimplemented
+    Forge: 'Forge',
     LiteLoader: 'LiteLoader',
     ForgeMod: 'ForgeMod',
     LiteMod: 'LiteMod',
@@ -531,14 +477,13 @@ let data = null
 
 /**
  * @returns {Promise.<DistroIndex>}
- */
+ **/
 exports.pullRemote = function(){
     if(DEV_MODE){
         return exports.pullLocal()
     }
     return new Promise((resolve, reject) => {
         const distroURL = 'http://mc.westeroscraft.com/WesterosCraftLauncher/distribution.json'
-        //const distroURL = 'https://gist.githubusercontent.com/dscalzi/53b1ba7a11d26a5c353f9d5ae484b71b/raw/'
         const opts = {
             url: distroURL,
             timeout: 2500
@@ -573,7 +518,7 @@ exports.pullRemote = function(){
 
 /**
  * @returns {Promise.<DistroIndex>}
- */
+ **/
 exports.pullLocal = function(){
     return new Promise((resolve, reject) => {
         fs.readFile(DEV_MODE ? DEV_PATH : DISTRO_PATH, 'utf-8', (err, d) => {
@@ -605,7 +550,7 @@ exports.isDevMode = function(){
 
 /**
  * @returns {DistroIndex}
- */
+ **/
 exports.getDistribution = function(){
     return data
 }

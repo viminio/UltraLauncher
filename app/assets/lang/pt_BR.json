@@ -1,0 +1,49 @@
+{
+    "html": {
+        "avatarOverlay": "Editar"
+    },
+    "js": {
+        "login": {
+            "error": {
+                "invalidValue": "* Valor inválido",
+                "requiredValue": "* Obrigatório",
+                "userMigrated": {
+                    "title": "Erro durante o login:<br>Credenciais inválidas",
+                    "desc": "Você tentou fazer login com uma conta migrada. Tente novamente usando o e-mail da conta como nome de usuário."
+                },
+                "invalidCredentials": {
+                    "title": "Erro durante o login:<br>Credenciais inválidas",
+                    "desc": "O e-mail ou senha que você digitou está incorreto. Por favor, tente novamente."
+                },
+                "rateLimit": {
+                    "title": "Erro durante o login:<br>Muitas tentativas",
+                    "desc": "Houve muitas tentativas de login com esta conta recentemente. Por favor, tente novamente mais tarde."
+                },
+                "noInternet": {
+                    "title": "Erro durante o login:<br>Sem conexão com a Internet",
+                    "desc": "Você deve estar conectado à Internet para fazer login. Por favor, conecte-se e tente novamente."
+                },
+                "authDown": {
+                    "title": "Erro durante o login:<br>Servidor de autenticação offline",
+                    "desc": "O servidor de autenticação da Mojang está atualmente offline ou inacessível. Aguarde um pouco e tente novamente. Você pode verificar o status do servidor em <a href=\"https://help.mojang.com/\"> Portal de ajuda da Mojang</a>."
+                },
+                "notPaid": {
+                    "title": "Erro durante o login:<br>Jogo não comprado",
+                    "desc": "A conta com a qual você está tentando fazer login não comprou uma cópia do Minecraft.<br>Você pode comprar uma cópia em <a href=\"https://minecraft.net/\">Minecraft.net </a>"
+                },
+                "unknown": {
+                    "title": "Erro durante o login:<br>Erro desconhecido"
+                }
+            },
+            "login": "LOGIN",
+            "loggingIn": "ACESSANDO",
+            "success": "SUCESSO",
+            "tryAgain": "Tente novamente"
+        },
+        "landing": {
+            "launch": {
+                "pleaseWait": "Por favor, espere.."
+            }
+        }
+    }
+}

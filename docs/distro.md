@@ -1,6 +1,6 @@
 # Distribution Index
 
-You can use [Nebula](https://github.com/dscalzi/Nebula) to automate the generation of a distribution index.
+You can use [Nebula](https://github.com/viminio/Nebula) to automate the generation of a distribution index.
 
 The distribution index is written in JSON. The general format of the index is as posted below.
 
